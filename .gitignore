@@ -1,2 +1,6 @@
 Sort Customers/*.xls*
 Sort Customers/Original Data/*
+sortByKra/*.xls*
+sortByKra/*.csv*
+*.xls*
+*.csv*

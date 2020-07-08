@@ -1,16 +1,36 @@
 import xlrd
+import csv
 
 # CONSTANTS
 CUST_CODE = 2
+KRA_PIN = 5
 EMAIL = 12
 PHONE = 13
 
 
 def read_data():
-    workbook = xlrd.open_workbook("./accountCustomer.xls")
+    workbook = xlrd.open_workbook("./customerdata.xls")
     sheet = workbook.sheet_by_index(0)
     data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
     return data
+
+
+def find_duplicate_customer_pins(data):
+    ALL_CUSTOMERS_BY_PIN = {}
+    # DUPLICATE_CUSTOMERS_BY_PIN = {}
+
+    for d in data:
+        if(d[KRA_PIN] is not ""):
+            if d[KRA_PIN] in ALL_CUSTOMERS_BY_PIN:
+                ALL_CUSTOMERS_BY_PIN[d[KRA_PIN]].append(d[CUST_CODE])
+                # if d[KRA_PIN] in DUPLICATE_CUSTOMERS_BY_PIN:
+                #     DUPLICATE_CUSTOMERS_BY_PIN[d[KRA_PIN]] += 1
+                # else:
+                #     DUPLICATE_CUSTOMERS_BY_PIN[d[KRA_PIN]] = 2
+            else:
+                ALL_CUSTOMERS_BY_PIN[d[KRA_PIN]] = [d[CUST_CODE]]
+
+    return ALL_CUSTOMERS_BY_PIN
 
 
 def find_duplicate_customer_codes(data):
@@ -91,20 +111,24 @@ def find_duplicate_phone_numbers(data):
     return DUPLICATE_RESULTS
 
 
-def output(codes, emails, phones):
+def output(pins, codes, emails, phones):
     output = ">>> Below are duplicate customers based on their customer codes, emails and phone numbers"
 
-    output += "\n\n>>> Duplicate Customers by Customer Codes\n\n"
-    for code in codes:
-        output += code + "\n"
+    output += "\n\n>>> Duplicate Customers by Customer KRA Pin\n\n"
+    for pin in pins:
+        output += pin + "\n"
 
-    output += "\n\n>>> Duplicate Customers by Email Address\n\n"
-    for email in emails:
-        output += email + ": " + str(emails[email]) + "\n"
+    # output += "\n\n>>> Duplicate Customers by Customer Codes\n\n"
+    # for code in codes:
+    #     output += code + "\n"
 
-    output += "\n\n>>> Duplicate Customers by Phone Numbers\n\n"
-    for phone in phones:
-        output += phone + ": " + str(phones[phone]) + "\n"
+    # output += "\n\n>>> Duplicate Customers by Email Address\n\n"
+    # for email in emails:
+    #     output += email + ": " + str(emails[email]) + "\n"
+
+    # output += "\n\n>>> Duplicate Customers by Phone Numbers\n\n"
+    # for phone in phones:
+    #     output += phone + ": " + str(phones[phone]) + "\n"
 
     text_file = open("duplicates.txt", "w")
     text_file.write(output)
@@ -131,25 +155,48 @@ def unique_duplicates(emails, phones):
     text_file.close()
 
 
+def print_duplicate_customers_by_pins(customersByKRA):
+    with open('duplicate_by_kra.csv', mode='w') as csv_file:
+        fieldnames = ['kra_pin', 'cust_1', 'cust_2', 'cust_3', 'cust_4', 'cust_5', 'cust_6', 'cust_7', 'cust_8', 'cust_9', 'cust_10',
+                      'cust_11', 'cust_12', 'cust_13', 'cust_14', 'cust_15', 'cust_16', 'cust_17', 'cust_18', 'cust_19', 'cust_20', 'cust_21', 'cust_22', 'cust_23']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for kra in customersByKRA:
+            data = {}
+            data['kra_pin'] = kra
+            for dup in range(0, 22):
+                keyName = 'cust_' + str(dup+1)
+                if len(customersByKRA[kra]) < dup+1:
+                    data[keyName] = ""
+                else:
+                    data[keyName] = customersByKRA[kra][dup]
+            writer.writerow(data)
+
+
 def __main__():
     print('>>> read data')
     data = read_data()
 
     print('>>> find duplicate customer codes')
-    duplicate_customer_by_codes = find_duplicate_customer_codes(data)
+    # duplicate_customer_by_codes = find_duplicate_customer_codes(data)
     # RESULTS FOR ALL DUPLICATE CUSTOMER CODES: ['CCP0013263', 'CKS0000112', 'CLU0003919', 'CGI0000436', 'CMT0001267', 'CAI0000001', 'CFR0000422', 'CFN0000337', 'CFN0000896']
 
-    print('>>> find duplicate email addresses')
-    duplicate_customers_by_emails = find_duplicate_emails(data)
+    print('>>> find duplicate customer pins')
+    duplicate_customer_by_pins = find_duplicate_customer_pins(data)
+    print_duplicate_customers_by_pins(duplicate_customer_by_pins)
 
-    print('>>> find duplicate phone numbers')
-    duplicate_customers_by_phone = find_duplicate_phone_numbers(data)
+    # print('>>> find duplicate email addresses')
+    # duplicate_customers_by_emails = find_duplicate_emails(data)
 
-    output(duplicate_customer_by_codes, duplicate_customers_by_emails,
-           duplicate_customers_by_phone)
+    # print('>>> find duplicate phone numbers')
+    # duplicate_customers_by_phone = find_duplicate_phone_numbers(data)
 
-    unique_duplicates(duplicate_customers_by_emails,
-                      duplicate_customers_by_phone)
+    # output(duplicate_customer_by_pins, duplicate_customer_by_codes,
+    #        duplicate_customers_by_emails, duplicate_customers_by_phone)
+
+    # unique_duplicates(duplicate_customers_by_emails,
+    # duplicate_customers_by_phone)
     print('>>> finished')
 
 
